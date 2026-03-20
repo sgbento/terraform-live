@@ -1,0 +1,23 @@
+# Terraform state — never commit these (state lives in S3)
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
+# Terraform working directories — generated on terraform init
+**/.terraform/
+**/.terraform.lock.hcl
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Sensitive variable files — use terraform.tfvars for non-sensitive values only
+# If you have secrets (passwords, keys), put them in terraform.tfvars.local and never commit
+*.tfvars.local
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# macOS
+.DS_Store
