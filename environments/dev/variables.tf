@@ -1,4 +1,4 @@
-# ── Identity ──────────────────────────────────────────────────────────────────
+# ── AWS ───────────────────────────────────────────────────────────────────────
 
 variable "aws_region" {
   description = "AWS region to deploy into"
@@ -7,11 +7,9 @@ variable "aws_region" {
 }
 
 # ── Module versions ───────────────────────────────────────────────────────────
-# Pin each module to a specific git tag.
-# To upgrade, change the tag here and run terraform init -upgrade.
 
 variable "modules_version" {
-  description = "Git tag of the terraform-modules repo to use for all modules"
+  description = "Git tag of the terraform-modules repo to use"
   type        = string
   default     = "v1.0.0"
 }
@@ -46,4 +44,50 @@ variable "data_subnet_cidrs" {
   description = "CIDR blocks for data subnets — RDS, ElastiCache (one per AZ)"
   type        = list(string)
   default     = ["10.0.30.0/24", "10.0.31.0/24", "10.0.32.0/24"]
+}
+
+# ── EKS ───────────────────────────────────────────────────────────────────────
+
+variable "kubernetes_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.31"
+}
+
+variable "public_access_cidrs" {
+  description = "CIDRs allowed to reach the EKS public API endpoint (your home IP)"
+  type        = list(string)
+  default     = ["0.0.0.0/0"] # Restrict to your IP: ["x.x.x.x/32"]
+}
+
+# ── Node Group ────────────────────────────────────────────────────────────────
+
+variable "node_instance_type" {
+  description = "EC2 instance type for worker nodes"
+  type        = string
+  default     = "t3.medium"
+}
+
+variable "node_capacity_type" {
+  description = "SPOT for cost saving (~70% cheaper), ON_DEMAND for stability"
+  type        = string
+  default     = "SPOT"
+}
+
+variable "node_desired_size" {
+  description = "Desired number of worker nodes"
+  type        = number
+  default     = 1
+}
+
+variable "node_min_size" {
+  description = "Minimum number of worker nodes"
+  type        = number
+  default     = 1
+}
+
+variable "node_max_size" {
+  description = "Maximum number of worker nodes"
+  type        = number
+  default     = 3
 }

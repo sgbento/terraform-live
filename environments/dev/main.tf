@@ -2,10 +2,8 @@ locals {
   name         = "myapp-dev"
   cluster_name = "myapp-dev"
 
-  # Git source base — all modules are pinned to the same tag for consistency.
-  # To use a different version per module, replace with individual variables.
-  # Replace "your-github-username" with your actual GitHub username
-  modules_base = "git::https://github.com/your-github-username/terraform-modules.git//modules"
+  # Git source base — all modules pinned to the same tag for consistency
+  modules_base = "git::https://github.com/sgbento/terraform-modules.git//modules"
 
   tags = {
     Environment = "dev"
@@ -41,7 +39,8 @@ module "subnets" {
   tags                  = local.tags
 }
 
-# ─── NAT Gateways ─────────────────────────────────────────────────────────────
+# ─── NAT Gateway ──────────────────────────────────────────────────────────────
+# single_nat_gateway = true saves ~$66/month for personal/dev use
 
 module "nat_gateway" {
   source = "${local.modules_base}/nat-gateway?ref=${var.modules_version}"
@@ -51,5 +50,34 @@ module "nat_gateway" {
   private_route_table_ids = module.subnets.private_route_table_ids
   data_route_table_ids    = module.subnets.data_route_table_ids
   internet_gateway_id     = module.vpc.internet_gateway_id
+  single_nat_gateway      = true
   tags                    = local.tags
+}
+
+# ─── EKS Cluster ──────────────────────────────────────────────────────────────
+
+module "eks" {
+  source = "${local.modules_base}/eks?ref=${var.modules_version}"
+
+  cluster_name        = local.cluster_name
+  kubernetes_version  = var.kubernetes_version
+  private_subnet_ids  = module.subnets.private_subnet_ids
+  public_access_cidrs = var.public_access_cidrs
+  tags                = local.tags
+}
+
+# ─── Node Group ───────────────────────────────────────────────────────────────
+
+module "node_group" {
+  source = "${local.modules_base}/node-group?ref=${var.modules_version}"
+
+  cluster_name       = module.eks.cluster_name
+  node_group_name    = "${local.name}-nodes"
+  private_subnet_ids = module.subnets.private_subnet_ids
+  instance_type      = var.node_instance_type
+  capacity_type      = var.node_capacity_type
+  desired_size       = var.node_desired_size
+  min_size           = var.node_min_size
+  max_size           = var.node_max_size
+  tags               = local.tags
 }
